@@ -9,8 +9,8 @@ class Config:
     
     def __init__(
         self,
-        population_size=10,
-        max_generations=10,
+        population_size=30,
+        max_generations=30,
         mutation_rate=0.1,
         crossover_rate=0.8,
         elite_size=2,

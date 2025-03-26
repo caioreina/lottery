@@ -24,6 +24,10 @@ def generate_all_trincas(min_num: int = 1, max_num: int = 60) -> Set[Tuple[int, 
     return result
 
 
+# Gera todas as trincas possíveis uma única vez
+TRINCAS = generate_all_trincas()
+
+
 def extract_trincas_from_game(game: list) -> Set[Tuple[int, int, int]]:
     """
     Extrai todas as trincas (combinações de 3 números) de um jogo.

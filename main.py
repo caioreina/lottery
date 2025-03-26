@@ -91,20 +91,6 @@ def run_genetic_algorithm(config: Config) -> Dict[str, Any]:
             
             try:
                 population.evolve()
-                
-                if generation % 1 == 0 or generation == config.max_generations:
-                    best = population.get_best()
-                    print(f"\nGeração {generation}:")
-                    print(f"  Melhor fitness: {best.fitness:.2f}")
-                    total_trincas = len(best.all_trincas)
-                    trincas_cobertas = len(best.trincas)
-                    print(f"  Trincas cobertas: {trincas_cobertas:,} ({(trincas_cobertas/total_trincas)*100:.2f}%)")
-                    
-                    # Calcula o limite inferior teórico de jogos necessários
-                    # Uma trinca aparece em 20 jogos diferentes, então dividimos o total de trincas por 20
-                    jogos_minimos = total_trincas / 20
-                    jogos_atuais = len(best.games)
-                    print(f"  Número de jogos: {jogos_atuais:,} ({(jogos_atuais/jogos_minimos)*100:.2f}% do mínimo teórico)")
             except Exception as e:
                 print(f"ERRO durante evolução da geração {generation}: {str(e)}")
                 traceback.print_exc()
@@ -158,10 +144,6 @@ def print_results(results: Dict[str, Any]) -> None:
     print(f"  Cobertura: {best.get_trincas_coverage() * 100:.2f}%")
     print(f"  Redundância: {best.get_trincas_redundancy():.2f}")
     print(f"  Fitness: {best.fitness:.2f}")
-    
-    print("\nJogos:")
-    for i, game in enumerate(best.games, 1):
-        print(f"  Jogo {i:3d}: {game}")
     
     print(f"\nTempo de execução: {results['elapsed_time']:.2f} segundos")
     print(f"Gerações: {results['final_generation']}")
