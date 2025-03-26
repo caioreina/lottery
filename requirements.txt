@@ -1,13 +1,9 @@
-black==25.1.0
-click==8.1.8
-flake8==7.1.2
-isort==6.0.1
-mccabe==0.7.0
-mypy==1.15.0
-mypy-extensions==1.0.0
-packaging==24.2
-pathspec==0.12.1
-platformdirs==4.3.7
-pycodestyle==2.12.1
-pyflakes==3.2.0
-typing_extensions==4.13.0
+# Dependências principais
+setuptools>=42.0.0
+
+# Ferramentas de desenvolvimento
+black>=21.5b2
+isort>=5.9.1
+mypy>=0.812
+flake8>=3.9.2
+pytest>=6.2.5

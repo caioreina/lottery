@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		// Formatação automática ao salvar
+		"editor.formatOnSave": true,
+		// Usa o Black como formatador
+		"python.formatting.provider": "black",
+		// Organiza os imports automaticamente com isort
+		"python.sortImports.args": [
+			"--profile",
+			"black"
+		],
+		// Linting com flake8
+		"python.linting.enabled": true,
+		"python.linting.flake8Enabled": true,
+		// Ativa o type checking com mypy
+		"python.linting.mypyEnabled": true,
+		// Caminho do Python dentro do venv
+		// Jupyter (caso use notebook futuramente)
+		"jupyter.jupyterServerType": "local",
+		"jupyter.pythonPath": "${workspaceFolder}/.venv/bin/python",
+		// Evita problemas com arquivos do WSL no Windows
+		"files.eol": "\n",
+		"files.insertFinalNewline": true,
+		// Recomendação de extensões (opcional)
+		"extensions.ignoreRecommendations": false,
+		"python.defaultInterpreterPath": "/home/cdreina/dev/lottery/.venv/bin/python"
+	}
+}
