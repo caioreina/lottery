@@ -3,9 +3,8 @@ Módulo principal do algoritmo genético para otimização de jogos da loteria.
 """
 
 from genetic.config import Config
-from genetic.individual import Individual
+from genetic.individual import Individual, calculate_fitness
 from genetic.population import Population
-from genetic.fitness import calculate_fitness
 from genetic.selection import tournament_selection
 from genetic.crossover import crossover
 from genetic.mutation import mutate, remove_redundant_games

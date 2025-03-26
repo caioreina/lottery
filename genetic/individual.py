@@ -10,6 +10,39 @@ import time
 from genetic.config import Config
 from genetic.trincas import extract_trincas_from_game, extract_trincas_from_games, generate_all_trincas, TRINCAS
 
+def calculate_fitness(individual: 'Individual') -> float:
+    """
+    Calcula o fitness de um indivíduo.
+    
+    O fitness considera dois objetivos em ordem de prioridade:
+    1. Maximizar o número de trincas únicas (escala principal)
+    2. Minimizar o número de jogos (escala secundária)
+    
+    Args:
+        individual: O indivíduo a ter seu fitness calculado.
+        
+    Returns:
+        Valor de fitness calculado.
+    """
+    # Extrai pesos da configuração
+    weights = individual.config.fitness_weights
+    
+    # Componente principal: cobertura de trincas (quanto maior, melhor)
+    trincas_coverage = len(individual.trincas)
+    trincas_coverage_score = trincas_coverage * weights['trincas_coverage']
+    
+    # Componente secundário: penalidade pelo número de jogos (quanto menos jogos, melhor)
+    games_penalty = len(individual.games) * weights['games_penalty']
+    
+    # Fitness final: componente principal - penalidade secundária
+    # A ordem de magnitude dos pesos garante que maximizar trincas é sempre
+    # mais importante que minimizar jogos
+    fitness = trincas_coverage_score - games_penalty
+    
+    # Atualiza o valor de fitness do indivíduo
+    individual.fitness = fitness
+    
+    return fitness
 
 class Individual:
     """
@@ -159,24 +192,28 @@ class Individual:
             f"  Trincas cobertas: {len(self.trincas)} de {len(self.all_trincas)} ({coverage:.2f}%)\n"
             f"  Redundância: {redundancy:.2f}\n"
             f"  Fitness: {self.fitness:.2f}"
-        ) 
-
+        )
+    
     @staticmethod
     def generate_by_groups(config: Config, num_games: Optional[int] = None, games_multiplier: float = 1.0):
         """Gera indivíduos baseados em grupos de trincas"""
         # Calcula número de jogos baseado no número de trincas
         if num_games is None:
-            # Usa a mesma lógica do generate_random
             num_games = int(len(TRINCAS) / 20 * games_multiplier)
         
         # Agrupa trincas por características
         grupos = {
             'pares': set(),
             'impares': set(),
-            'mistas': set()
+            'mistas': set(),
+            'baixos': set(),    # números 1-20
+            'meios': set(),     # números 21-40
+            'altos': set()      # números 41-60
         }
         
+        # Classifica as trincas em grupos
         for trinca in TRINCAS:
+            # Classifica por paridade
             pares = sum(1 for n in trinca if n % 2 == 0)
             if pares == 3:
                 grupos['pares'].add(trinca)
@@ -184,46 +221,124 @@ class Individual:
                 grupos['impares'].add(trinca)
             else:
                 grupos['mistas'].add(trinca)
+            
+            # Classifica por faixa de valores
+            baixos = sum(1 for n in trinca if n <= 20)
+            altos = sum(1 for n in trinca if n > 40)
+            if baixos >= 2:
+                grupos['baixos'].add(trinca)
+            elif altos >= 2:
+                grupos['altos'].add(trinca)
+            else:
+                grupos['meios'].add(trinca)
         
         # Calcula proporção de jogos por grupo
         total_trincas = sum(len(g) for g in grupos.values())
         jogos_por_grupo = {
-            grupo: max(1, int(num_games * (len(trincas) / total_trincas)))  # Garante pelo menos 1 jogo por grupo
+            grupo: max(1, int(num_games * (len(trincas) / total_trincas)))
             for grupo, trincas in grupos.items()
         }
         
         # Ajusta para garantir o número total de jogos
         jogos_restantes = num_games - sum(jogos_por_grupo.values())
         if jogos_restantes > 0:
-            jogos_por_grupo['mistas'] += jogos_restantes
+            # Distribui jogos restantes entre os grupos mais importantes
+            grupos_prioritarios = ['mistas', 'baixos', 'meios', 'altos']
+            for grupo in grupos_prioritarios:
+                if jogos_restantes <= 0:
+                    break
+                jogos_por_grupo[grupo] += 1
+                jogos_restantes -= 1
         
         # Gera jogos para cada grupo
         jogos = []
+        
         for grupo, num_jogos in jogos_por_grupo.items():
             trincas_grupo = list(grupos[grupo])
             if not trincas_grupo:
                 continue
                 
-            for _ in range(num_jogos):  # num_jogos já é inteiro aqui
+            # Embaralha as trincas do grupo
+            random.shuffle(trincas_grupo)
+            
+            # Gera jogos baseados nas trincas do grupo
+            for i in range(num_jogos):
                 # Seleciona uma trinca aleatória do grupo
-                trinca = random.choice(trincas_grupo)
-                # Gera um jogo que cobre essa trinca
+                trinca = trincas_grupo[i % len(trincas_grupo)]
+                
+                # Cria um jogo baseado na trinca
                 jogo = list(trinca)
-                # Adiciona números aleatórios para completar o jogo
-                while len(jogo) < 6:
-                    novo_numero = random.randint(1, 60)
-                    if novo_numero not in jogo:
-                        jogo.append(novo_numero)
-                jogos.append(tuple(sorted(jogo)))
+                
+                # Adiciona números complementares baseado no grupo
+                if grupo == 'pares':
+                    # Adiciona números pares
+                    numeros = [n for n in range(2, 61, 2) if n not in jogo]
+                elif grupo == 'impares':
+                    # Adiciona números ímpares
+                    numeros = [n for n in range(1, 61, 2) if n not in jogo]
+                elif grupo == 'baixos':
+                    # Adiciona números baixos
+                    numeros = [n for n in range(1, 21) if n not in jogo]
+                elif grupo == 'altos':
+                    # Adiciona números altos
+                    numeros = [n for n in range(41, 61) if n not in jogo]
+                elif grupo == 'meios':
+                    # Adiciona números do meio
+                    numeros = [n for n in range(21, 41) if n not in jogo]
+                else:  # mistas
+                    # Adiciona números de qualquer faixa
+                    numeros = [n for n in range(1, 61) if n not in jogo]
+                
+                # Embaralha e seleciona números complementares
+                random.shuffle(numeros)
+                jogo.extend(numeros[:3])
+                
+                # Ordena e adiciona o jogo
+                jogos.append(sorted(jogo))
         
-        # Calcula trincas cobertas
+        # Cria o indivíduo
+        individual = Individual(config)
+        individual.games = jogos
+        individual.calculate_trincas()
+        individual.creation_method = 'groups'
+        
+        return individual
+
+    @staticmethod
+    def _optimize_individual(individual: 'Individual') -> 'Individual':
+        """Otimiza um indivíduo removendo jogos redundantes e melhorando a cobertura"""
+        # Calcula o fitness inicial
+        fitness_inicial = calculate_fitness(individual)
+        
+        # Remove jogos redundantes
+        jogos_otimizados = []
         trincas_cobertas = set()
-        for jogo in jogos:
-            for i in range(len(jogo)-2):
-                for j in range(i+1, len(jogo)-1):
-                    for k in range(j+1, len(jogo)):
-                        trinca = tuple(sorted((jogo[i], jogo[j], jogo[k])))
-                        if trinca in TRINCAS:
-                            trincas_cobertas.add(trinca)
         
-        return Individual(config=config, jogos=jogos, trincas=trincas_cobertas, creation_method='groups') 
+        # Ordena os jogos pelo número de trincas novas que adicionam
+        jogos_ordenados = []
+        for jogo in individual.games:
+            trincas_jogo = set(extract_trincas_from_game(jogo))
+            trincas_novas = trincas_jogo - trincas_cobertas
+            jogos_ordenados.append((jogo, len(trincas_novas)))
+        
+        # Ordena os jogos pelo número de trincas novas (decrescente)
+        jogos_ordenados.sort(key=lambda x: x[1], reverse=True)
+        
+        # Mantém apenas os jogos que adicionam trincas novas
+        for jogo, num_trincas_novas in jogos_ordenados:
+            if num_trincas_novas > 0:
+                jogos_otimizados.append(jogo)
+                trincas_cobertas.update(extract_trincas_from_game(jogo))
+        
+        # Atualiza os jogos do indivíduo
+        individual.games = jogos_otimizados
+        individual.calculate_trincas()
+        fitness_final = calculate_fitness(individual)
+        
+        # Se a otimização piorou o fitness, reverte as mudanças
+        if fitness_final < fitness_inicial:
+            individual.games = individual.games
+            individual.calculate_trincas()
+            calculate_fitness(individual)
+        
+        return individual 
