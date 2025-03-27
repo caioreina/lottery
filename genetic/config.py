@@ -2,6 +2,8 @@
 Configurações do algoritmo genético para otimização de jogos da loteria.
 """
 
+from typing import Dict
+
 class Config:
     """
     Classe que armazena as configurações do algoritmo genético.
@@ -14,7 +16,7 @@ class Config:
         mutation_rate=0.1,
         crossover_rate=0.8,
         elite_size=2,
-        games_multiplier=3.0,
+        games_multiplier=2.0,
         fitness_weights=None
     ):
         """
