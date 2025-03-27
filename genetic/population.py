@@ -37,27 +37,23 @@ class Population:
         print(f"Inicializando população com {self.config.population_size} indivíduos...")
         start_time = time.time()
         
-        # Calcula quantos indivíduos serão gerados por cada método
-        metade = self.config.population_size // 2
-        resto = self.config.population_size % 2
-        
-        # Gera metade com método aleatório
-        for i in range(metade + resto):
-            individual = Individual(self.config)
-            individual.generate_random()
-            calculate_fitness(individual)
-            self.individuals.append(individual)
-        
-        # Gera metade com método por grupos
-        for i in range(metade):
-            ind = Individual.generate_by_groups(self.config, None, self.config.games_multiplier)
-            calculate_fitness(ind)  # Calcula o fitness do indivíduo gerado por grupos
+        # Gera indivíduos aleatórios
+        for _ in range(self.config.population_size):
+            ind = Individual.generate_random(self.config)
             self.individuals.append(ind)
         
-        end_time = time.time()
-        print(f"Tempo total de inicialização: {end_time - start_time:.2f} segundos")
+        # Atualiza o melhor indivíduo
+        self.best_individual = max(self.individuals, key=lambda x: x.fitness)
         
-        self._update_best()
+        # Calcula e exibe estatísticas
+        end_time = time.time()
+        print(f"Tempo de inicialização: {end_time - start_time:.2f} segundos")
+        print(f"Melhor fitness inicial: {self.best_individual.fitness:.2f}")
+        print(f"Melhor indivíduo:")
+        print(f"  Método: {self.best_individual.creation_method}")
+        print(f"  Trincas cobertas: {len(self.best_individual.trincas):,} ({self.best_individual.get_trincas_coverage()*100:.2f}%)")
+        print(f"  Número de jogos: {len(self.best_individual.games):,} ({self.config.games_multiplier*100:.2f}% do mínimo teórico)\n")
+        
         self.generation = 1
     
     def _update_best(self) -> None:
@@ -119,6 +115,10 @@ class Population:
             parent1 = self.select_parents()[0]
             parent2 = self.select_parents()[1]
             
+            # Calcula fitness dos pais
+            parent1_fitness = calculate_fitness(parent1)
+            parent2_fitness = calculate_fitness(parent2)
+            
             # Realiza crossover
             child1, child2 = crossover(parent1, parent2, self.config.crossover_rate)
             
@@ -131,10 +131,19 @@ class Population:
             remove_redundant_games(child2)
             
             # Calcula fitness dos filhos
-            calculate_fitness(child1)
-            calculate_fitness(child2)
+            child1_fitness = calculate_fitness(child1)
+            child2_fitness = calculate_fitness(child2)
             
-            new_population.extend([child1, child2])
+            # Verifica se os filhos são melhores que os pais
+            if child1_fitness > parent1_fitness:
+                new_population.append(child1)
+            else:
+                new_population.append(parent1)
+                
+            if child2_fitness > parent2_fitness:
+                new_population.append(child2)
+            else:
+                new_population.append(parent2)
         
         # Ajusta o tamanho da população se necessário
         if len(new_population) > self.config.population_size:

@@ -74,9 +74,9 @@ class Individual:
         Gera jogos aleatórios para o indivíduo.
         
         Args:
-            num_games: Número de jogos a serem gerados. Se None, será calculado
-                      baseado na quantidade de trincas.
-                      
+            num_games: Número de jogos a serem gerados. Se não especificado,
+                      será calculado com base no multiplicador de jogos.
+        
         Returns:
             O próprio indivíduo, para permitir encadeamento de métodos.
         """
@@ -195,112 +195,30 @@ class Individual:
         )
     
     @staticmethod
-    def generate_by_groups(config: Config, num_games: Optional[int] = None, games_multiplier: float = 1.0):
-        """Gera indivíduos baseados em grupos de trincas"""
-        # Calcula número de jogos baseado no número de trincas
+    def generate_random(config: Config, num_games: Optional[int] = None) -> 'Individual':
+        """Gera um indivíduo com jogos aleatórios.
+        
+        Args:
+            config: Configurações do algoritmo genético
+            num_games: Número de jogos a gerar. Se não especificado, será calculado com base no multiplicador de jogos
+        """
+        # Se não especificado, calcula o número de jogos baseado no multiplicador
         if num_games is None:
-            num_games = int(len(TRINCAS) / 20 * games_multiplier)
+            # Cada jogo tem 20 trincas
+            # Precisamos de aproximadamente 1711 jogos para cobrir todas as trincas (34220)
+            # Usamos o multiplicador para ter flexibilidade
+            num_games = int(1711 * config.games_multiplier)
         
-        # Agrupa trincas por características
-        grupos = {
-            'pares': set(),
-            'impares': set(),
-            'mistas': set(),
-            'baixos': set(),    # números 1-20
-            'meios': set(),     # números 21-40
-            'altos': set()      # números 41-60
-        }
-        
-        # Classifica as trincas em grupos
-        for trinca in TRINCAS:
-            # Classifica por paridade
-            pares = sum(1 for n in trinca if n % 2 == 0)
-            if pares == 3:
-                grupos['pares'].add(trinca)
-            elif pares == 0:
-                grupos['impares'].add(trinca)
-            else:
-                grupos['mistas'].add(trinca)
-            
-            # Classifica por faixa de valores
-            baixos = sum(1 for n in trinca if n <= 20)
-            altos = sum(1 for n in trinca if n > 40)
-            if baixos >= 2:
-                grupos['baixos'].add(trinca)
-            elif altos >= 2:
-                grupos['altos'].add(trinca)
-            else:
-                grupos['meios'].add(trinca)
-        
-        # Calcula proporção de jogos por grupo
-        total_trincas = sum(len(g) for g in grupos.values())
-        jogos_por_grupo = {
-            grupo: max(1, int(num_games * (len(trincas) / total_trincas)))
-            for grupo, trincas in grupos.items()
-        }
-        
-        # Ajusta para garantir o número total de jogos
-        jogos_restantes = num_games - sum(jogos_por_grupo.values())
-        if jogos_restantes > 0:
-            # Distribui jogos restantes entre os grupos mais importantes
-            grupos_prioritarios = ['mistas', 'baixos', 'meios', 'altos']
-            for grupo in grupos_prioritarios:
-                if jogos_restantes <= 0:
-                    break
-                jogos_por_grupo[grupo] += 1
-                jogos_restantes -= 1
-        
-        # Gera jogos para cada grupo
-        jogos = []
-        
-        for grupo, num_jogos in jogos_por_grupo.items():
-            trincas_grupo = list(grupos[grupo])
-            if not trincas_grupo:
-                continue
-                
-            # Embaralha as trincas do grupo
-            random.shuffle(trincas_grupo)
-            
-            # Gera jogos baseados nas trincas do grupo
-            for i in range(num_jogos):
-                # Seleciona uma trinca aleatória do grupo
-                trinca = trincas_grupo[i % len(trincas_grupo)]
-                
-                # Cria um jogo baseado na trinca
-                jogo = list(trinca)
-                
-                # Adiciona números complementares baseado no grupo
-                if grupo == 'pares':
-                    # Adiciona números pares
-                    numeros = [n for n in range(2, 61, 2) if n not in jogo]
-                elif grupo == 'impares':
-                    # Adiciona números ímpares
-                    numeros = [n for n in range(1, 61, 2) if n not in jogo]
-                elif grupo == 'baixos':
-                    # Adiciona números baixos
-                    numeros = [n for n in range(1, 21) if n not in jogo]
-                elif grupo == 'altos':
-                    # Adiciona números altos
-                    numeros = [n for n in range(41, 61) if n not in jogo]
-                elif grupo == 'meios':
-                    # Adiciona números do meio
-                    numeros = [n for n in range(21, 41) if n not in jogo]
-                else:  # mistas
-                    # Adiciona números de qualquer faixa
-                    numeros = [n for n in range(1, 61) if n not in jogo]
-                
-                # Embaralha e seleciona números complementares
-                random.shuffle(numeros)
-                jogo.extend(numeros[:3])
-                
-                # Ordena e adiciona o jogo
-                jogos.append(sorted(jogo))
-        
-        # Cria o indivíduo
         individual = Individual(config)
-        individual.games = jogos
+        individual.creation_method = "random"
+        
+        # Gera os jogos aleatórios
+        for _ in range(num_games):
+            individual.games.append(individual._generate_random_game())
+        
+        # Calcula as trincas e fitness
         individual.calculate_trincas()
-        individual.creation_method = 'groups'
+        individual.fitness = calculate_fitness(individual)
         
         return individual
 

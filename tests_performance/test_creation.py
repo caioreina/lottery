@@ -1,130 +1,52 @@
 import unittest
 import time
-from genetic.individual import Individual, calculate_fitness
+from genetic.individual import Individual
 from genetic.config import Config
 
 class TestCreationPerformance(unittest.TestCase):
     def setUp(self):
-        self.config = Config()
-        self.num_tests = 3  # Reduzido para 3 para manter consistência com o teste de crossover
-        self.num_individuals = 10  # Reduzido para 10 para manter consistência com o teste de crossover
-        
+        """Configuração inicial para os testes"""
+        self.config = Config(
+            population_size=100,
+            max_generations=30,
+            mutation_rate=0.1,
+            crossover_rate=0.8,
+            elite_size=2,
+            games_multiplier=3.0
+        )
+    
     def test_random_creation(self):
         """Testa a performance da criação aleatória de indivíduos"""
         print("\nTestando criação aleatória de indivíduos...")
-        times = []
-        fitness_values = []
         
-        for i in range(self.num_tests):
+        # Executa o teste 3 vezes para ter uma média
+        tempos = []
+        fitnesses = []
+        
+        for i in range(3):
+            print(f"\nTeste {i+1}:")
             start_time = time.time()
-            test_fitness = []
             
             # Cria indivíduos aleatórios
-            for _ in range(self.num_individuals):
-                individual = Individual(self.config).generate_random()
-                fitness = calculate_fitness(individual)
-                test_fitness.append(fitness)
+            for _ in range(10):
+                individual = Individual.generate_random(self.config)
+                fitnesses.append(individual.fitness)
             
             end_time = time.time()
-            times.append(end_time - start_time)
-            fitness_values.append(sum(test_fitness) / len(test_fitness))
+            tempo = end_time - start_time
+            tempos.append(tempo)
             
-            print(f"Teste {i+1}:")
-            print(f"  Tempo: {times[-1]:.2f} segundos")
-            print(f"  Fitness médio: {fitness_values[-1]:.2f}")
+            print(f"  Tempo: {tempo:.2f} segundos")
+            print(f"  Fitness médio: {sum(fitnesses[-10:])/10:.2f}")
         
-        avg_time = sum(times) / len(times)
-        avg_fitness = sum(fitness_values) / len(fitness_values)
-        print(f"\nResultados da criação aleatória:")
-        print(f"Tempo médio: {avg_time:.2f} segundos")
-        print(f"Tempo médio por indivíduo: {(avg_time/self.num_individuals)*1000:.2f} ms")
-        print(f"Fitness médio: {avg_fitness:.2f}")
+        # Calcula e exibe resultados
+        tempo_medio = sum(tempos) / len(tempos)
+        fitness_medio = sum(fitnesses) / len(fitnesses)
         
-    def test_groups_creation(self):
-        """Testa a performance da criação de indivíduos por grupos"""
-        print("\nTestando criação de indivíduos por grupos...")
-        times = []
-        fitness_values = []
-        
-        for i in range(self.num_tests):
-            start_time = time.time()
-            test_fitness = []
-            
-            # Cria indivíduos por grupos
-            for _ in range(self.num_individuals):
-                individual = Individual.generate_by_groups(self.config)
-                fitness = calculate_fitness(individual)
-                test_fitness.append(fitness)
-            
-            end_time = time.time()
-            times.append(end_time - start_time)
-            fitness_values.append(sum(test_fitness) / len(test_fitness))
-            
-            print(f"Teste {i+1}:")
-            print(f"  Tempo: {times[-1]:.2f} segundos")
-            print(f"  Fitness médio: {fitness_values[-1]:.2f}")
-        
-        avg_time = sum(times) / len(times)
-        avg_fitness = sum(fitness_values) / len(fitness_values)
-        print(f"\nResultados da criação por grupos:")
-        print(f"Tempo médio: {avg_time:.2f} segundos")
-        print(f"Tempo médio por indivíduo: {(avg_time/self.num_individuals)*1000:.2f} ms")
-        print(f"Fitness médio: {avg_fitness:.2f}")
-        
-    def test_creation_comparison(self):
-        """Compara os resultados das diferentes estratégias de criação"""
-        print("\nComparando estratégias de criação...")
-        
-        # Testa criação aleatória
-        random_times = []
-        random_fitness = []
-        for _ in range(self.num_tests):
-            start_time = time.time()
-            test_fitness = []
-            
-            for _ in range(self.num_individuals):
-                individual = Individual(self.config).generate_random()
-                fitness = calculate_fitness(individual)
-                test_fitness.append(fitness)
-                
-            random_times.append(time.time() - start_time)
-            random_fitness.append(sum(test_fitness) / len(test_fitness))
-        
-        # Testa criação por grupos
-        groups_times = []
-        groups_fitness = []
-        for _ in range(self.num_tests):
-            start_time = time.time()
-            test_fitness = []
-            
-            for _ in range(self.num_individuals):
-                individual = Individual.generate_by_groups(self.config)
-                fitness = calculate_fitness(individual)
-                test_fitness.append(fitness)
-                
-            groups_times.append(time.time() - start_time)
-            groups_fitness.append(sum(test_fitness) / len(test_fitness))
-        
-        # Calcula médias
-        avg_random_time = sum(random_times) / len(random_times)
-        avg_groups_time = sum(groups_times) / len(groups_times)
-        avg_random_fitness = sum(random_fitness) / len(random_fitness)
-        avg_groups_fitness = sum(groups_fitness) / len(groups_fitness)
-        
-        print("\nResultados da comparação:")
-        print("\nCriação aleatória:")
-        print(f"  Tempo médio: {avg_random_time:.2f} segundos")
-        print(f"  Fitness médio: {avg_random_fitness:.2f}")
-        
-        print("\nCriação por grupos:")
-        print(f"  Tempo médio: {avg_groups_time:.2f} segundos")
-        print(f"  Fitness médio: {avg_groups_fitness:.2f}")
-        
-        print("\nComparação:")
-        print(f"Diferença de tempo: {abs(avg_random_time - avg_groups_time):.2f} segundos")
-        print(f"Diferença de fitness: {abs(avg_random_fitness - avg_groups_fitness):.2f}")
-        print(f"Mais rápido: {'Aleatória' if avg_random_time < avg_groups_time else 'Por grupos'}")
-        print(f"Melhor fitness: {'Aleatória' if avg_random_fitness > avg_groups_fitness else 'Por grupos'}")
+        print("\nResultados da criação aleatória:")
+        print(f"Tempo médio: {tempo_medio:.2f} segundos")
+        print(f"Tempo médio por indivíduo: {(tempo_medio/10)*1000:.2f} ms")
+        print(f"Fitness médio: {fitness_medio:.2f}")
 
 if __name__ == '__main__':
     unittest.main() 
