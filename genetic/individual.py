@@ -110,7 +110,7 @@ class Individual:
         # Divide os números em faixas para garantir melhor distribuição
         low_range = list(range(1, 21))     # 1-20
         mid_range = list(range(21, 41))    # 21-40
-        high_range = list(range(41, 61))   # 41-60
+        high_range = list(range(41, 61))   # 41-60 
         
         # Embaralha cada faixa
         random.shuffle(low_range)

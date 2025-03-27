@@ -7,11 +7,10 @@ import time
 from typing import List, Tuple, Optional
 
 from genetic.config import Config
-from genetic.individual import Individual
+from genetic.individual import Individual, calculate_fitness
 from genetic.selection import tournament_selection
 from genetic.crossover import crossover
 from genetic.mutation import mutate, remove_redundant_games
-from genetic.fitness import calculate_fitness
 
 
 class Population:
