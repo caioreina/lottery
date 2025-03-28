@@ -260,3 +260,74 @@ class Individual:
             calculate_fitness(individual)
         
         return individual 
+
+    @staticmethod
+    def generate_by_smart_coverage(config: Config, num_games: Optional[int] = None, random_percentage: float = 0.25) -> 'Individual':
+        """Gera um indivíduo usando uma heurística inteligente de cobertura.
+        
+        Estratégia:
+        1. Cria uma porcentagem dos jogos de forma aleatória
+        2. Avalia a cobertura de trincas
+        3. Identifica trincas faltantes
+        4. Cria jogos focados nas trincas faltantes
+        5. Completa com jogos aleatórios se necessário
+        
+        Args:
+            config: Configurações do algoritmo genético
+            num_games: Número de jogos a gerar. Se não especificado, será calculado com base no multiplicador de jogos
+            random_percentage: Porcentagem de jogos aleatórios (0.0 a 1.0)
+        """
+        # Se não especificado, calcula o número de jogos baseado no multiplicador
+        if num_games is None:
+            num_games = int(1711 * config.games_multiplier)
+        
+        individual = Individual(config)
+        individual.creation_method = f"smart_coverage_{int(random_percentage*100)}%"
+        
+        # 1. Cria uma porcentagem dos jogos de forma aleatória
+        jogos_iniciais = int(num_games * random_percentage)
+        for _ in range(jogos_iniciais):
+            individual.games.append(individual._generate_random_game())
+        
+        # Calcula trincas iniciais
+        individual.calculate_trincas()
+        
+        # 2. Identifica trincas faltantes usando um set para performance
+        trincas_faltantes = set(TRINCAS) - individual.trincas
+        
+        # 3. Cria jogos focados nas trincas faltantes
+        max_tentativas = num_games - jogos_iniciais
+        tentativas = 0
+        
+        while trincas_faltantes and tentativas < max_tentativas:
+            # Seleciona uma trinca aleatória das faltantes
+            trinca_alvo = random.choice(list(trincas_faltantes))
+            
+            # Cria um jogo que contém a trinca alvo
+            jogo = list(trinca_alvo)
+            
+            # Adiciona 3 números complementares
+            numeros_disponiveis = [n for n in range(1, 61) if n not in jogo]
+            complementares = random.sample(numeros_disponiveis, 3)
+            jogo.extend(complementares)
+            
+            # Ordena e adiciona o jogo
+            individual.games.append(sorted(jogo))
+            
+            # Atualiza trincas e faltantes
+            novas_trincas = set(extract_trincas_from_game(jogo))
+            trincas_faltantes -= novas_trincas
+            individual.trincas.update(novas_trincas)
+            
+            tentativas += 1
+        
+        # 4. Completa com jogos aleatórios se necessário
+        jogos_restantes = num_games - len(individual.games)
+        for _ in range(jogos_restantes):
+            individual.games.append(individual._generate_random_game())
+        
+        # Calcula fitness final
+        individual.calculate_trincas()
+        individual.fitness = calculate_fitness(individual)
+        
+        return individual

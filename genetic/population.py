@@ -30,15 +30,33 @@ class Population:
         self.best_individual: Optional[Individual] = None
         self.generation = 0
     
-    def initialize(self) -> None:
-        """
-        Inicializa a população com indivíduos aleatórios.
-        """
-        print(f"Inicializando população com {self.config.population_size} indivíduos...")
+    def _initialize_population(self):
+        """Inicializa a população com indivíduos usando diferentes estratégias de criação"""
+        print("\nInicializando população...")
         start_time = time.time()
         
-        # Gera indivíduos aleatórios
-        for _ in range(self.config.population_size):
+        # Calcula quantos indivíduos serão gerados por cada método
+        total = self.config.population_size
+        dez_porcento = total // 10
+        quarenta_porcento = total // 2 - dez_porcento
+        
+        # 10% com 10% aleatórios
+        for _ in range(dez_porcento):
+            ind = Individual.generate_by_smart_coverage(self.config, random_percentage=0.10)
+            self.individuals.append(ind)
+        
+        # 40% com 25% aleatórios
+        for _ in range(quarenta_porcento):
+            ind = Individual.generate_by_smart_coverage(self.config, random_percentage=0.25)
+            self.individuals.append(ind)
+        
+        # 40% com 50% aleatórios
+        for _ in range(quarenta_porcento):
+            ind = Individual.generate_by_smart_coverage(self.config, random_percentage=0.50)
+            self.individuals.append(ind)
+        
+        # 10% totalmente aleatórios
+        for _ in range(dez_porcento):
             ind = Individual.generate_random(self.config)
             self.individuals.append(ind)
         
