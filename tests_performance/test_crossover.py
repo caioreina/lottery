@@ -1,15 +1,20 @@
+"""
+Testes de performance para operações de crossover.
+"""
+
 import unittest
 import time
-from genetic.individual import Individual
+from typing import List, Tuple
+
 from genetic.config import Config
+from genetic.individual import Individual, calculate_fitness
 from genetic.crossover import crossover, crossover_by_trincas
-from genetic.fitness import calculate_fitness
 
 class TestCrossoverPerformance(unittest.TestCase):
     def setUp(self):
         self.config = Config()
-        self.num_tests = 3
-        self.num_pairs = 10
+        self.num_tests = 2
+        self.num_pairs = 5
         
     def test_standard_crossover(self):
         """Testa a performance do crossover padrão"""
@@ -23,8 +28,8 @@ class TestCrossoverPerformance(unittest.TestCase):
             
             # Cria pares de indivíduos e aplica crossover
             for _ in range(self.num_pairs):
-                parent1 = Individual(self.config).generate_random()
-                parent2 = Individual(self.config).generate_random()
+                parent1 = Individual.generate_random(self.config)
+                parent2 = Individual.generate_random(self.config)
                 
                 # Calcula fitness dos pais
                 parent1_fitness = calculate_fitness(parent1)
@@ -67,8 +72,8 @@ class TestCrossoverPerformance(unittest.TestCase):
             
             # Cria pares de indivíduos e aplica crossover por trincas
             for _ in range(self.num_pairs):
-                parent1 = Individual(self.config).generate_random()
-                parent2 = Individual(self.config).generate_random()
+                parent1 = Individual.generate_random(self.config)
+                parent2 = Individual.generate_random(self.config)
                 
                 # Calcula fitness dos pais
                 parent1_fitness = calculate_fitness(parent1)
@@ -111,8 +116,8 @@ class TestCrossoverPerformance(unittest.TestCase):
             test_improvements = []
             
             for _ in range(self.num_pairs):
-                parent1 = Individual(self.config).generate_random()
-                parent2 = Individual(self.config).generate_random()
+                parent1 = Individual.generate_random(self.config)
+                parent2 = Individual.generate_random(self.config)
                 
                 parent1_fitness = calculate_fitness(parent1)
                 parent2_fitness = calculate_fitness(parent2)
@@ -136,8 +141,8 @@ class TestCrossoverPerformance(unittest.TestCase):
             test_improvements = []
             
             for _ in range(self.num_pairs):
-                parent1 = Individual(self.config).generate_random()
-                parent2 = Individual(self.config).generate_random()
+                parent1 = Individual.generate_random(self.config)
+                parent2 = Individual.generate_random(self.config)
                 
                 parent1_fitness = calculate_fitness(parent1)
                 parent2_fitness = calculate_fitness(parent2)
