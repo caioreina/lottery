@@ -1,23 +1,19 @@
 """
-Módulo principal do algoritmo genético para otimização de jogos da loteria.
+Módulo principal do pacote genetic.
 """
 
 from genetic.config import Config
-from genetic.individual import Individual, calculate_fitness
+from genetic.individual import Individual
 from genetic.population import Population
+from genetic.crossover import Crossover
+from genetic.mutation import mutate
 from genetic.selection import tournament_selection
-from genetic.crossover import crossover
-from genetic.mutation import mutate, remove_redundant_games
-from genetic.trincas import generate_all_trincas
 
 __all__ = [
     'Config',
     'Individual',
     'Population',
-    'calculate_fitness',
-    'tournament_selection',
-    'crossover',
+    'Crossover',
     'mutate',
-    'remove_redundant_games',
-    'generate_all_trincas'
+    'tournament_selection'
 ] 

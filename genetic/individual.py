@@ -194,6 +194,33 @@ class Individual:
             f"  Fitness: {self.fitness:.2f}"
         )
     
+    def __eq__(self, other: object) -> bool:
+        """
+        Compara dois indivíduos para igualdade.
+        
+        Args:
+            other: Outro objeto para comparação.
+            
+        Returns:
+            bool: True se os indivíduos são iguais, False caso contrário.
+        """
+        if not isinstance(other, Individual):
+            return NotImplemented
+        
+        # Compara os jogos
+        if len(self.games) != len(other.games):
+            return False
+        
+        # Converte os jogos para tuplas para comparação
+        self_games = [tuple(game) for game in self.games]
+        other_games = [tuple(game) for game in other.games]
+        
+        # Ordena os jogos para garantir que a ordem não afete a comparação
+        self_games.sort()
+        other_games.sort()
+        
+        return self_games == other_games
+    
     @staticmethod
     def generate_random(config: Config, num_games: Optional[int] = None) -> 'Individual':
         """Gera um indivíduo com jogos aleatórios.

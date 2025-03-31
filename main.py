@@ -68,53 +68,82 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def run_genetic_algorithm(config: Config) -> Dict[str, Any]:
+def print_header():
+    """Imprime o cabeçalho do programa"""
+    print("=" * 60)
+    print("ALGORITMO GENÉTICO PARA OTIMIZAÇÃO DE JOGOS DA LOTERIA")
+    print("=" * 60)
+    print()
+
+
+def print_config(config: Config):
+    """Imprime as configurações do algoritmo"""
+    print("Configurações:")
+    print(config)
+    print()
+
+
+def print_error(error: Exception, start_time: float):
+    """Imprime informações sobre um erro ocorrido"""
+    print("=" * 50)
+    print("ERRO DURANTE EXECUÇÃO")
+    print("=" * 50)
+    print()
+    print(f"Erro: {str(error)}")
+    print(f"Tempo de execução até o erro: {time.time() - start_time:.2f} segundos")
+
+
+def run_genetic_algorithm(config: Config = None) -> None:
     """
-    Executa o algoritmo genético.
+    Executa o algoritmo genético com as configurações fornecidas.
     
     Args:
-        config: Configuração do algoritmo.
-        
-    Returns:
-        Um dicionário contendo os resultados.
+        config: Configurações do algoritmo. Se None, usa configurações padrão.
     """
+    # Usa configurações padrão se não fornecidas
+    if config is None:
+        config = Config()
+    
+    # Registra tempo inicial
     start_time = time.time()
     
     try:
-        # Inicializa a população
-        population = Population(config)
-        population.initialize()
+        # Imprime informações iniciais
+        print_header()
+        print_config(config)
         
-        # Processo de evolução
-        for generation in range(1, config.max_generations + 1):
-            gen_start = time.time()
+        print("Iniciando algoritmo genético...")
+        print()
+        
+        # Cria e inicializa população
+        population = Population(config)
+        population._initialize_population()
+        
+        # Loop principal do algoritmo
+        for generation in range(config.max_generations):
+            # Evolui a população
+            population.evolve()
             
-            try:
-                population.evolve()
-            except Exception as e:
-                print(f"ERRO durante evolução da geração {generation}: {str(e)}")
-                traceback.print_exc()
+            # Verifica se atingiu critério de parada
+            best = population.get_best()
+            if best.get_trincas_coverage() >= 0.99:
+                print("\nCritério de parada atingido!")
+                print(f"Cobertura de trincas: {best.get_trincas_coverage()*100:.2f}%")
                 break
         
-        best_individual = population.get_best()
-        elapsed_time = time.time() - start_time
+        # Exibe resultados finais
+        end_time = time.time()
+        print("\nAlgoritmo concluído!")
+        print(f"Tempo total de execução: {end_time - start_time:.2f} segundos")
+        print("\nMelhor solução encontrada:")
+        print(population.get_best())
         
-        results = {
-            "best_individual": best_individual,
-            "final_generation": population.generation,
-            "elapsed_time": elapsed_time
-        }
-        
-        return results
     except Exception as e:
-        print(f"ERRO CRÍTICO durante execução do algoritmo: {str(e)}")
+        print("\nERRO CRÍTICO durante execução do algoritmo:", str(e))
+        print("Traceback:")
         traceback.print_exc()
-        
-        elapsed_time = time.time() - start_time
-        return {
-            "error": str(e),
-            "elapsed_time": elapsed_time
-        }
+        print()
+        print_error(e, start_time)
 
 
 def print_results(results: Dict[str, Any]) -> None:
@@ -182,10 +211,7 @@ def main() -> None:
         print("\nIniciando algoritmo genético...\n")
         
         # Run the genetic algorithm
-        results = run_genetic_algorithm(config)
-        
-        # Print results
-        print_results(results)
+        run_genetic_algorithm(config)
     except Exception as e:
         print(f"ERRO FATAL: {str(e)}")
         traceback.print_exc()

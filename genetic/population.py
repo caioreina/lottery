@@ -9,7 +9,7 @@ from typing import List, Tuple, Optional
 from genetic.config import Config
 from genetic.individual import Individual, calculate_fitness
 from genetic.selection import tournament_selection
-from genetic.crossover import crossover
+from genetic.crossover import Crossover
 from genetic.mutation import mutate, remove_redundant_games
 
 
@@ -29,6 +29,7 @@ class Population:
         self.individuals: List[Individual] = []
         self.best_individual: Optional[Individual] = None
         self.generation = 0
+        self.crossover = Crossover(config)
     
     def _initialize_population(self):
         """Inicializa a população com indivíduos usando diferentes estratégias de criação"""
@@ -138,7 +139,7 @@ class Population:
             parent2_fitness = calculate_fitness(parent2)
             
             # Realiza crossover
-            child1, child2 = crossover(parent1, parent2, self.config.crossover_rate)
+            child1, child2 = self.crossover.crossover_by_redundancy(parent1, parent2)
             
             # Aplica mutação
             mutate(child1, self.config.mutation_rate)

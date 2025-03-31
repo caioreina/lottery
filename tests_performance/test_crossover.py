@@ -4,180 +4,105 @@ Testes de performance para operações de crossover.
 
 import unittest
 import time
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from genetic.config import Config
 from genetic.individual import Individual, calculate_fitness
-from genetic.crossover import crossover, crossover_by_trincas
+from genetic.crossover import Crossover
 
 class TestCrossoverPerformance(unittest.TestCase):
     def setUp(self):
         self.config = Config()
-        self.num_tests = 2
+        self.crossover = Crossover(self.config)
+        self.num_tests = 3
         self.num_pairs = 5
         
-    def test_standard_crossover(self):
-        """Testa a performance do crossover padrão"""
-        print("\nTestando crossover padrão...")
+    def _calculate_coverage_improvement(self, parent: Individual, child: Individual) -> float:
+        """Calcula a melhoria na cobertura de trincas entre pai e filho."""
+        parent_coverage = len(parent.trincas) / len(self.crossover._all_possible_trincas)
+        child_coverage = len(child.trincas) / len(self.crossover._all_possible_trincas)
+        return ((child_coverage - parent_coverage) / parent_coverage) * 100
+    
+    def _test_crossover_method(self, method_name: str, crossover_func) -> Dict:
+        """Testa um método específico de crossover e retorna métricas."""
+        print(f"\nTestando {method_name}...")
         times = []
         fitness_improvements = []
+        coverage_improvements = []
         
         for i in range(self.num_tests):
             start_time = time.time()
-            test_improvements = []
+            test_fitness_improvements = []
+            test_coverage_improvements = []
             
-            # Cria pares de indivíduos e aplica crossover
             for _ in range(self.num_pairs):
                 parent1 = Individual.generate_random(self.config)
                 parent2 = Individual.generate_random(self.config)
                 
-                # Calcula fitness dos pais
+                # Calcula métricas dos pais
                 parent1_fitness = calculate_fitness(parent1)
                 parent2_fitness = calculate_fitness(parent2)
                 parent_fitness = max(parent1_fitness, parent2_fitness)
                 
-                # Aplica crossover e calcula fitness dos filhos
-                children = crossover(parent1, parent2)
+                # Aplica crossover
+                children = crossover_func(parent1, parent2)
+                child1, child2 = children
+                
+                # Calcula métricas dos filhos
                 children_fitness = [calculate_fitness(child) for child in children]
                 child_fitness = max(children_fitness)
                 
-                # Calcula melhoria percentual
-                improvement = ((child_fitness - parent_fitness) / parent_fitness) * 100
-                test_improvements.append(improvement)
+                # Calcula melhorias
+                fitness_improvement = ((child_fitness - parent_fitness) / parent_fitness) * 100
+                coverage_improvement1 = self._calculate_coverage_improvement(parent1, child1)
+                coverage_improvement2 = self._calculate_coverage_improvement(parent2, child2)
+                
+                test_fitness_improvements.append(fitness_improvement)
+                test_coverage_improvements.append((coverage_improvement1 + coverage_improvement2) / 2)
             
             end_time = time.time()
             times.append(end_time - start_time)
-            fitness_improvements.append(sum(test_improvements) / len(test_improvements))
+            fitness_improvements.append(sum(test_fitness_improvements) / len(test_fitness_improvements))
+            coverage_improvements.append(sum(test_coverage_improvements) / len(test_coverage_improvements))
             
             print(f"Teste {i+1}:")
             print(f"  Tempo: {times[-1]:.2f} segundos")
             print(f"  Melhoria média de fitness: {fitness_improvements[-1]:.2f}%")
+            print(f"  Melhoria média de cobertura: {coverage_improvements[-1]:.2f}%")
         
         avg_time = sum(times) / len(times)
-        avg_improvement = sum(fitness_improvements) / len(fitness_improvements)
-        print(f"\nResultados do crossover padrão:")
+        avg_fitness = sum(fitness_improvements) / len(fitness_improvements)
+        avg_coverage = sum(coverage_improvements) / len(coverage_improvements)
+        
+        print(f"\nResultados de {method_name}:")
         print(f"Tempo médio: {avg_time:.2f} segundos")
         print(f"Tempo médio por par: {(avg_time/self.num_pairs)*1000:.2f} ms")
-        print(f"Melhoria média de fitness: {avg_improvement:.2f}%")
+        print(f"Melhoria média de fitness: {avg_fitness:.2f}%")
+        print(f"Melhoria média de cobertura: {avg_coverage:.2f}%")
         
-    def test_trincas_crossover(self):
-        """Testa a performance do crossover por trincas"""
-        print("\nTestando crossover por trincas...")
-        times = []
-        fitness_improvements = []
-        
-        for i in range(self.num_tests):
-            start_time = time.time()
-            test_improvements = []
-            
-            # Cria pares de indivíduos e aplica crossover por trincas
-            for _ in range(self.num_pairs):
-                parent1 = Individual.generate_random(self.config)
-                parent2 = Individual.generate_random(self.config)
-                
-                # Calcula fitness dos pais
-                parent1_fitness = calculate_fitness(parent1)
-                parent2_fitness = calculate_fitness(parent2)
-                parent_fitness = max(parent1_fitness, parent2_fitness)
-                
-                # Aplica crossover e calcula fitness dos filhos
-                children = crossover_by_trincas(parent1, parent2)
-                children_fitness = [calculate_fitness(child) for child in children]
-                child_fitness = max(children_fitness)
-                
-                # Calcula melhoria percentual
-                improvement = ((child_fitness - parent_fitness) / parent_fitness) * 100
-                test_improvements.append(improvement)
-            
-            end_time = time.time()
-            times.append(end_time - start_time)
-            fitness_improvements.append(sum(test_improvements) / len(test_improvements))
-            
-            print(f"Teste {i+1}:")
-            print(f"  Tempo: {times[-1]:.2f} segundos")
-            print(f"  Melhoria média de fitness: {fitness_improvements[-1]:.2f}%")
-        
-        avg_time = sum(times) / len(times)
-        avg_improvement = sum(fitness_improvements) / len(fitness_improvements)
-        print(f"\nResultados do crossover por trincas:")
-        print(f"Tempo médio: {avg_time:.2f} segundos")
-        print(f"Tempo médio por par: {(avg_time/self.num_pairs)*1000:.2f} ms")
-        print(f"Melhoria média de fitness: {avg_improvement:.2f}%")
-        
+        return {
+            "time": avg_time,
+            "fitness": avg_fitness,
+            "coverage": avg_coverage
+        }
+    
     def test_crossover_comparison(self):
-        """Compara os resultados das diferentes estratégias de crossover"""
-        print("\nComparando estratégias de crossover...")
+        """Compara os resultados das diferentes estratégias de crossover."""
+        print("\nTestando crossover por redundância...")
         
-        # Testa crossover padrão
-        standard_times = []
-        standard_improvements = []
-        for _ in range(self.num_tests):
-            start_time = time.time()
-            test_improvements = []
-            
-            for _ in range(self.num_pairs):
-                parent1 = Individual.generate_random(self.config)
-                parent2 = Individual.generate_random(self.config)
-                
-                parent1_fitness = calculate_fitness(parent1)
-                parent2_fitness = calculate_fitness(parent2)
-                parent_fitness = max(parent1_fitness, parent2_fitness)
-                
-                children = crossover(parent1, parent2)
-                children_fitness = [calculate_fitness(child) for child in children]
-                child_fitness = max(children_fitness)
-                
-                improvement = ((child_fitness - parent_fitness) / parent_fitness) * 100
-                test_improvements.append(improvement)
-                
-            standard_times.append(time.time() - start_time)
-            standard_improvements.append(sum(test_improvements) / len(test_improvements))
+        # Testa apenas o método por redundância
+        results = {
+            "Por Redundância": self._test_crossover_method("crossover por redundância", self.crossover.crossover_by_redundancy)
+        }
         
-        # Testa crossover por trincas
-        trincas_times = []
-        trincas_improvements = []
-        for _ in range(self.num_tests):
-            start_time = time.time()
-            test_improvements = []
-            
-            for _ in range(self.num_pairs):
-                parent1 = Individual.generate_random(self.config)
-                parent2 = Individual.generate_random(self.config)
-                
-                parent1_fitness = calculate_fitness(parent1)
-                parent2_fitness = calculate_fitness(parent2)
-                parent_fitness = max(parent1_fitness, parent2_fitness)
-                
-                children = crossover_by_trincas(parent1, parent2)
-                children_fitness = [calculate_fitness(child) for child in children]
-                child_fitness = max(children_fitness)
-                
-                improvement = ((child_fitness - parent_fitness) / parent_fitness) * 100
-                test_improvements.append(improvement)
-                
-            trincas_times.append(time.time() - start_time)
-            trincas_improvements.append(sum(test_improvements) / len(test_improvements))
-        
-        # Calcula médias
-        avg_standard_time = sum(standard_times) / len(standard_times)
-        avg_trincas_time = sum(trincas_times) / len(trincas_times)
-        avg_standard_improvement = sum(standard_improvements) / len(standard_improvements)
-        avg_trincas_improvement = sum(trincas_improvements) / len(trincas_improvements)
-        
-        print("\nResultados da comparação:")
-        print("\nCrossover padrão:")
-        print(f"  Tempo médio: {avg_standard_time:.2f} segundos")
-        print(f"  Melhoria média de fitness: {avg_standard_improvement:.2f}%")
-        
-        print("\nCrossover por trincas:")
-        print(f"  Tempo médio: {avg_trincas_time:.2f} segundos")
-        print(f"  Melhoria média de fitness: {avg_trincas_improvement:.2f}%")
-        
-        print("\nComparação:")
-        print(f"Diferença de tempo: {abs(avg_standard_time - avg_trincas_time):.2f} segundos")
-        print(f"Diferença de melhoria: {abs(avg_standard_improvement - avg_trincas_improvement):.2f}%")
-        print(f"Mais rápido: {'Padrão' if avg_standard_time < avg_trincas_time else 'Por trincas'}")
-        print(f"Melhor fitness: {'Padrão' if avg_standard_improvement > avg_trincas_improvement else 'Por trincas'}")
+        # Análise dos resultados
+        print("\nResultados:")
+        for name, data in results.items():
+            print(f"\n{name}:")
+            print(f"Tempo médio: {data['time']:.2f} segundos")
+            print(f"Tempo médio por par: {(data['time']/self.num_pairs)*1000:.2f} ms")
+            print(f"Melhoria média de fitness: {data['fitness']:.2f}%")
+            print(f"Melhoria média de cobertura: {data['coverage']:.2f}%")
 
 if __name__ == '__main__':
     unittest.main() 

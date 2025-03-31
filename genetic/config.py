@@ -14,7 +14,7 @@ class Config:
         population_size=30,
         max_generations=30,
         mutation_rate=0.1,
-        crossover_rate=0.8,
+        crossover_rate=1.0,
         elite_size=2,
         games_multiplier=2.0,
         fitness_weights=None

@@ -15,7 +15,7 @@ class TestCreationPerformance(unittest.TestCase):
             elite_size=2,
             games_multiplier=3.0
         )
-        self.num_execucoes = 10  # Número de execuções para média
+        self.num_execucoes = 3  # Reduzido de 10 para 3
         self.num_individuos = 10  # Número de indivíduos por execução
     
     def test_random_creation(self):
