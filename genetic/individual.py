@@ -222,34 +222,6 @@ class Individual:
         return self_games == other_games
     
     @staticmethod
-    def generate_random(config: Config, num_games: Optional[int] = None) -> 'Individual':
-        """Gera um indivíduo com jogos aleatórios.
-        
-        Args:
-            config: Configurações do algoritmo genético
-            num_games: Número de jogos a gerar. Se não especificado, será calculado com base no multiplicador de jogos
-        """
-        # Se não especificado, calcula o número de jogos baseado no multiplicador
-        if num_games is None:
-            # Cada jogo tem 20 trincas
-            # Precisamos de aproximadamente 1711 jogos para cobrir todas as trincas (34220)
-            # Usamos o multiplicador para ter flexibilidade
-            num_games = int(1711 * config.games_multiplier)
-        
-        individual = Individual(config)
-        individual.creation_method = "random"
-        
-        # Gera os jogos aleatórios
-        for _ in range(num_games):
-            individual.games.append(individual._generate_random_game())
-        
-        # Calcula as trincas e fitness
-        individual.calculate_trincas()
-        individual.fitness = calculate_fitness(individual)
-        
-        return individual
-
-    @staticmethod
     def _optimize_individual(individual: 'Individual') -> 'Individual':
         """Otimiza um indivíduo removendo jogos redundantes e melhorando a cobertura"""
         # Calcula o fitness inicial

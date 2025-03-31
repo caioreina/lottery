@@ -14,7 +14,6 @@ import traceback
 
 from genetic.config import Config
 from genetic.population import Population
-from genetic.mutation import remove_redundant_games
 
 
 def parse_arguments():

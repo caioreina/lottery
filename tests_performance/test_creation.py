@@ -33,7 +33,8 @@ class TestCreationPerformance(unittest.TestCase):
             # Cria indivíduos aleatórios
             execucao_fitnesses = []
             for _ in range(self.num_individuos):
-                individual = Individual.generate_random(self.config)
+                individual = Individual(config=self.config)
+                individual.generate_random()
                 execucao_fitnesses.append(individual.fitness)
             
             end_time = time.time()

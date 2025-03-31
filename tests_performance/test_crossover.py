@@ -36,8 +36,11 @@ class TestCrossoverPerformance(unittest.TestCase):
             test_coverage_improvements = []
             
             for _ in range(self.num_pairs):
-                parent1 = Individual.generate_random(self.config)
-                parent2 = Individual.generate_random(self.config)
+                # Cria dois indivíduos aleatórios
+                parent1 = Individual(config=self.config)
+                parent1.generate_random()
+                parent2 = Individual(config=self.config)
+                parent2.generate_random()
                 
                 # Calcula métricas dos pais
                 parent1_fitness = calculate_fitness(parent1)

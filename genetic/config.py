@@ -2,7 +2,9 @@
 Configurações do algoritmo genético para otimização de jogos da loteria.
 """
 
-from typing import Dict
+import itertools
+from typing import Dict, List
+import random
 
 class Config:
     """
@@ -11,12 +13,12 @@ class Config:
     
     def __init__(
         self,
-        population_size=30,
+        population_size=10,
         max_generations=30,
-        mutation_rate=0.1,
+        mutation_rate=0.05,
         crossover_rate=1.0,
-        elite_size=2,
-        games_multiplier=2.0,
+        elite_size=5,
+        games_multiplier=1.0,
         fitness_weights=None
     ):
         """

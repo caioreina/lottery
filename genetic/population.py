@@ -10,7 +10,7 @@ from genetic.config import Config
 from genetic.individual import Individual, calculate_fitness
 from genetic.selection import tournament_selection
 from genetic.crossover import Crossover
-from genetic.mutation import mutate, remove_redundant_games
+from genetic.mutation import Mutation
 
 
 class Population:
@@ -30,6 +30,7 @@ class Population:
         self.best_individual: Optional[Individual] = None
         self.generation = 0
         self.crossover = Crossover(config)
+        self.mutation = Mutation(config)
     
     def _initialize_population(self):
         """Inicializa a população com indivíduos usando diferentes estratégias de criação"""
@@ -58,7 +59,8 @@ class Population:
         
         # 10% totalmente aleatórios
         for _ in range(dez_porcento):
-            ind = Individual.generate_random(self.config)
+            ind = Individual(config=self.config)
+            ind.generate_random()
             self.individuals.append(ind)
         
         # Atualiza o melhor indivíduo
@@ -141,13 +143,15 @@ class Population:
             # Realiza crossover
             child1, child2 = self.crossover.crossover_by_redundancy(parent1, parent2)
             
-            # Aplica mutação
-            mutate(child1, self.config.mutation_rate)
-            mutate(child2, self.config.mutation_rate)
+            # Aplica mutação inteligente
+            self.mutation.mutate_by_smart_replacement(child1)
+            self.mutation.mutate_by_smart_replacement(child2)
             
+                        
             # Remove jogos redundantes
-            remove_redundant_games(child1)
-            remove_redundant_games(child2)
+            self.mutation.mutate_by_redundancy(child1)
+            self.mutation.mutate_by_redundancy(child2)
+
             
             # Calcula fitness dos filhos
             child1_fitness = calculate_fitness(child1)
